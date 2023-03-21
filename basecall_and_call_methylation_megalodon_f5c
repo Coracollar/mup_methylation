@@ -1,0 +1,37 @@
+#!/bin/bash
+#SBATCH --job-name="minimapf5c"
+#SBATCH --nodes=1
+#SBATCH --mem=100G
+#SBATCH --time=7-00:00:00
+#SBATCH --partition=gpgpu
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=24
+
+
+fast5folder=""
+genomammi="~/GRCm38_genome/esembleGRCm38.mmi" #minimap2 indexed genome
+megalodondirectory=""
+sample=""
+pycomethpath=""
+
+source ~/anaconda3/etc/profile.d/conda.sh
+conda activate Nanopore
+
+# minimap2 --version=2.17-r941
+# samtools 1.10 Using htslib 1.10.2
+minimap2 -ax map-ont $genomammi basecalls.fastq | samtools view -S -b | samtools sort -o mappings_minimap.sorted.bam &&
+samtools index mappings_minimap.sorted.bam
+conda deactivate
+
+module load fosscuda
+module load f5c/v0.5
+export HDF5_PLUGIN_PATH=/home/coracollar/lib/plugins
+
+f5c index -d $fast5folder basecalls.fastq  --iop 24 -t 24
+
+f5c call-methylation --meth-out-version=2 -b $megalodondirectory/mappings_minimap.sorted.bam -g $genomafasta -r basecalls.fastq \
+-B 7.0M -K 800 --iop 24 -t 24 > f5c_meth_calls.tsv
+
+
+f5c meth-freq -i f5c_meth_calls.tsv > f5c_meth_frec.tsv
