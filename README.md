@@ -1,30 +1,8 @@
 # mup_methylation
 
-DNA methylation from raw sequencing data was obtained using f5c https://github.com/hasindu2008/f5c and the following commands:
+DNA methylation from raw sequencing data was obtained using f5c https://github.com/hasindu2008/f5c. We used a bash script on HPC using 1 GPU and 24 CPUs. 
 
 ```bash
-#!/bin/bash
-#SBATCH --job-name="minimapf5c"
-#SBATCH --nodes=1
-#SBATCH --mem=100G
-#SBATCH --time=7-00:00:00
-#SBATCH --account=punim1048
-#SBATCH --qos=gpgpuresplat
-#SBATCH --partition=gpgpu
-#SBATCH --gres=gpu:1
-#SBATCH --ntasks=1
-#SBATCH --cpus-per-task=24
-#SBATCH -o f5c.%N.%j.out # STDOUT 
-#SBATCH -e f5c.%N.%j.err # STDERR
-
-fast5folder=""
-genomafasta="~/GRCm38_genome/genome.fa"
-genomammi="~/GRCm38_genome/esembleGRCm38.mmi"
-megalodondirectory=""
-sample=""
-
-source ~/anaconda3/etc/profile.d/conda.sh
-conda activate Nanopore
 
 # minimap2 --version=2.17-r941
 # samtools 1.10 Using htslib 1.10.2
@@ -46,70 +24,13 @@ f5c meth-freq -i f5c_meth_calls.tsv > f5c_meth_frec.tsv
 
 ```
 
-Methylation frequencies obtained from f5c were loaded into R in order to extract the region of interest for differential analysis. We used DSS dmltest and findDMR options. Although no DMR was found for p.threshold 0.05.
+Methylation frequencies obtained from f5c were loaded into R in order to extract the region of interest for differential analysis. We used DSS dmltest and findDMR options. Although no DMR was found for p.threshold 0.05. Functions prepare_for_DSS and boxplotting2 are in the script functions.R.
+
 ```R
 library(bsseq)
 library(DSS)
 library(tidyverse)
-makeBSseqData <- function (dat, sampleNames) {
-  n0 <- length(dat)
-  if (missing(sampleNames)) 
-    sampleNames <- paste("sample", 1:n0, sep = "")
-  alldat <- dat[[1]]
-  if (any(alldat[, "N"] < alldat[, "X"], na.rm = TRUE)) 
-    stop("Some methylation counts are greater than coverage.\n")
-  ix.X <- which(colnames(alldat) == "X")
-  ix.N <- which(colnames(alldat) == "N")
-  colnames(alldat)[ix.X] <- "X1"
-  colnames(alldat)[ix.N] <- "N1"
-  if (n0 > 1) {
-    for (i in 2:n0) {
-      thisdat <- dat[[i]]
-      if (any(thisdat[, "N"] < thisdat[, "X"], na.rm = TRUE)) 
-        stop("Some methylation counts are greater than coverage.\n")
-      ix.X <- which(colnames(thisdat) == "X")
-      ix.N <- which(colnames(thisdat) == "N")
-      colnames(thisdat)[c(ix.X, ix.N)] <- paste(c("X", 
-                                                  "N"), i, sep = "")
-      alldat <- merge(alldat, thisdat, all = TRUE, by = c("chr", "pos"))
-    }
-  }
-  alldat <- alldat[order(alldat$chr, alldat$pos), ]
-  ix.X <- grep("X", colnames(alldat))
-  ix.N <- grep("N", colnames(alldat))
-  alldat[is.na(alldat)] <- 0
-  M <- as.matrix(alldat[, ix.X, drop = FALSE])
-  Cov <- as.matrix(alldat[, ix.N, drop = FALSE])
-  colnames(M) <- colnames(Cov) <- sampleNames
-  idx <- split(1:length(alldat$chr), alldat$chr)
-  M.ordered <- M
-  Cov.ordered <- Cov
-  pos.ordered <- alldat$pos
-  for (i in seq(along = idx)) {
-    thisidx = idx[[i]]
-    thispos = alldat$pos[thisidx]
-    dd = diff(thispos)
-    if (min(dd) < 0) {
-      warning(paste0("CG positions in chromosome ", names(idx)[i], 
-                     " is not ordered. Reorder CG sites.\n"))
-      iii = order(thispos)
-      M.ordered[thisidx, ] <- M[thisidx, ][iii, ]
-      Cov.ordered[thisidx, ] <- Cov[thisidx, ][iii, ]
-      pos.ordered[thisidx] <- alldat$pos[thisidx][iii]
-    }
-  }
-  result <- BSseq(chr = alldat$chr, pos = pos.ordered, M = M.ordered, 
-                  Cov = Cov.ordered)
-  result
-}
 
-prepare_for_DSS<-function(query){
-  colnames(query) <-c("chr", "pos", "N", "X")
-  query$chr <- paste(rep("chr",nrow(query)), query$chr, sep = "")
-  query$N<-as.numeric(paste(query$N))
-  query$X<-as.numeric(paste(query$X))
-  return(query)
-}
 
 #mC
 C0<-read.table(file="~/C0/20210318_megalodon_4.2.2/f5c_meth_frec.tsv",  header=T, sep="\t")
@@ -127,6 +48,7 @@ CORT13<-read.table(file="~/CORT13/f5c_meth_frec.tsv", header=T, sep="\t")
 CORT14<-read.table(file="~/CORT14/20210311_megalodon_4.2.2/f5c_meth_frec.tsv",  header=T, sep="\t")
 
 CORT15<-read.table(file="~/CORT15/20210319_megalodon_4.2.2/f5c_meth_frec_chr.tsv",  header=T, sep="\t")
+
 
 C0_DSS<-prepare_for_DSS(C0)
 C1_DSS<-prepare_for_DSS(C1)
@@ -162,7 +84,7 @@ write.table(dmlTest, file= "dmltest_mup.tsv", append = FALSE, sep = "\t", dec = 
 #get methylation frequency matrix
 methylation_data<-getMeth(BSobj_mup, type="raw")
 rownames(methylation_data)<-paste(BSobj_mup@rowRanges@seqnames, BSobj_mup@rowRanges@ranges@start)
-write.table(methylation_data,"~/mup_methylation_matrixf5c_June22.tsv") # table of methylation provided
+write.table(methylation_data,"~/mup_methylation_matrix.tsv") # table of methylation provided
 
 
 
@@ -182,24 +104,6 @@ methylation_dataframe %>%
   geom_density()
 
 #boxplot of Mup20 chr4:62,009,410-62,056,143
-
-boxplotting2<-function(BSobj, gr){
-  BSobj_gr<-subsetByOverlaps(BSobj, gr)
-  methylation_data<-getMeth(BSobj_gr, type="raw")
-  methylation_dataframe<-na.omit(as.data.frame(methylation_data))
-  methylation_dataframe$Control_mean<-rowMeans(methylation_dataframe[,1:4])  
-  methylation_dataframe$CORT_mean<-rowMeans(methylation_dataframe[,5:8])
-  methylation_dataframe$Control_sdev<-apply(methylation_dataframe[,1:4],1,sd)  
-  methylation_dataframe$CORT_sdev<-apply(methylation_dataframe[,5:8],1,sd) 
-  mean(methylation_dataframe$Control_mean)
-  mean(methylation_dataframe$CORT_mean)
-  methylation_dataframe %>% 
-    gather(key="Samples", value="Methylation_frequency") %>%
-    ggplot( aes(x=Samples, y=Methylation_frequency, fill=Samples)) +
-    geom_boxplot() 
-}
-
-
 
 gr<-GRanges(seqnames = "chr4",
             ranges = IRanges(start = 62009410, end=62056143))
@@ -240,7 +144,7 @@ t.test.from.summary.data(m_x, s_x, 4, m_y, s_y, 4)
 ```
 
 
-Finally, plots of the genes of interest were done using Nanomethviz https://github.com/shians/NanoMethViz, which extracts methylation data from calls derived directly from f5c calls.
+Finally, plots of methylation vs genomic position were done using Nanomethviz https://github.com/shians/NanoMethViz, which extracts methylation data from calls derived directly from f5c calls.
 
 ```R
 library(NanoMethViz)
