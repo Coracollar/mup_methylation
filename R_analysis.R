@@ -1,7 +1,7 @@
 library(bsseq)
 library(DSS)
 library(tidyverse)
-
+library(NanoMethViz)
 #functions
 makeBSseqData <- function (dat, sampleNames) {
   n0 <- length(dat)
@@ -179,3 +179,30 @@ s_x<-sd(p1[1:4])
 m_y<-mean(p1[5:8])
 s_y<-mean(p1[5:8])
 t.test.from.summary.data(m_x, s_x, 4, m_y, s_y, 4)
+
+#plot with NanoMethviZ. Note that the .bgz file was created in advance using the scripts prepare_data_NMV.R and prepare_data_NMV.slurm
+
+methy <-"/data/gpfs/projects/punim1048/RStudio/4vs4/4vs4_methy_data.bgz"
+
+exon_tibble <- get_exons_mus_musculus()
+
+sample <- c("C0", "C1", "C2", "C3","CORT12", "CORT13", "CORT14", "CORT15")
+group<-c("Control","Control","Control","Control", "CORT", "CORT", "CORT", "CORT")
+sample_anno <- data.frame(sample, group, stringsAsFactors = FALSE)
+
+nmeth_results <- NanoMethResult(methy, sample_anno, exon_tibble)
+
+
+# plot data
+
+plot_gene(nmeth_results, "Mup2")
+plot_gene(nmeth_results, "Mup20")
+plot_gene(nmeth_results, "Mup3")
+plot_gene(nmeth_results, "Mup18")
+plot_gene(nmeth_results, "Mup15")
+plot_gene(nmeth_results, "Zhx2")
+
+# whole mup region chr4:59,904,830-62,212,385
+
+plot_region(nmeth_results2, "4", 59904830, 62212385)
+
