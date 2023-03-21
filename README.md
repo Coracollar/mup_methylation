@@ -75,22 +75,34 @@ gr<-GRanges(seqnames = "chr4",
 BSobj_mup<-subsetByOverlaps(BSobjmc, gr)
 
 #test significance
-dmlTest= DMLtest(BSobjtldr, group1=c("CORT12", "CORT13", "CORT14", "CORT15"), group2=c("C0","C1", "C2", "C3"), smoothing=FALSE)
+dmlTest= DMLtest(BSobj_mup, group1=c("CORT12", "CORT13", "CORT14", "CORT15"), group2=c("C0","C1", "C2", "C3"), smoothing=FALSE)
 #find differentially methylated regions
-dmrs = callDMR(dmlTest, p.threshold=0.05)
+dmrs = callDMR(dmlTest, p.threshold=0.05) #none found
 
 write.table(dmlTest, file= "dmltest_mup.tsv", append = FALSE, sep = "\t", dec = ".", quote = FALSE, row.names = FALSE, col.names = TRUE)
+
+
+#extract Zhx2 region
+gr<-GRanges(seqnames = "chr15",
+            ranges = IRanges(start = 57692667, end=57841832))
+
+BSobj_Zhx2<-subsetByOverlaps(BSobj, gr)
+dmlTest= DMLtest(BSobj_Zhx2, group1=c("CORT12", "CORT13", "CORT14", "CORT15"), group2=c("C0","C1", "C2", "C3"), smoothing=FALSE)
+dmrs = callDMR(dmlTest, p.threshold=0.05) #none found
+write.csv(dmlTest, file= "dmltest_Zhx2.csv")
 
 #get methylation frequency matrix
 methylation_data<-getMeth(BSobj_mup, type="raw")
 rownames(methylation_data)<-paste(BSobj_mup@rowRanges@seqnames, BSobj_mup@rowRanges@ranges@start)
-write.table(methylation_data,"~/mup_methylation_matrix.tsv") # table of methylation provided
 
-
+methylation_data2<-getMeth(BSobj_Zhx2, type="raw")
+rownames(methylation_data2)<-paste(BSobj_Zhx2@rowRanges@seqnames, BSobj_Zhx2@rowRanges@ranges@start)
+alldata<-rbind(methylation_data2, methylation_data)
+write.csv(alldata, "mupzhx2_methylation_matrix.csv")
 
 ##plot data
+#prepare data for ggplot
 methylation_dataframe<-na.omit(as.data.frame(methylation_data))
-
 methylation_dataframe$chr<-as.character(BSobj_mup@rowRanges@seqnames)
 methylation_dataframe$start<-BSobj_mup@rowRanges@ranges@start
 methylation_dataframe$end<-methylation_dataframe$start+1
