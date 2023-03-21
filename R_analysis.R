@@ -1,6 +1,8 @@
 library(bsseq)
 library(DSS)
 library(tidyverse)
+
+#functions
 makeBSseqData <- function (dat, sampleNames) {
   n0 <- length(dat)
   if (missing(sampleNames)) 
@@ -61,22 +63,38 @@ prepare_for_DSS<-function(query){
   return(query)
 }
 
-#mC
-C0<-read.table(file="~/C0/20210318_megalodon_4.2.2/f5c_meth_frec.tsv",  header=T, sep="\t")
+boxplotting2<-function(BSobj, gr){
+  BSobj_gr<-subsetByOverlaps(BSobj, gr)
+  methylation_data<-getMeth(BSobj_gr, type="raw")
+  methylation_dataframe<-na.omit(as.data.frame(methylation_data))
+  methylation_dataframe$Control_mean<-rowMeans(methylation_dataframe[,1:4])  
+  methylation_dataframe$CORT_mean<-rowMeans(methylation_dataframe[,5:8])
+  methylation_dataframe$Control_sdev<-apply(methylation_dataframe[,1:4],1,sd)  
+  methylation_dataframe$CORT_sdev<-apply(methylation_dataframe[,5:8],1,sd) 
+  mean(methylation_dataframe$Control_mean)
+  mean(methylation_dataframe$CORT_mean)
+  methylation_dataframe %>% 
+    gather(key="Samples", value="Methylation_frequency") %>%
+    ggplot( aes(x=Samples, y=Methylation_frequency, fill=Samples)) +
+    geom_boxplot() 
+}
 
-C1<-read.table(file="~/C1/20210311_megalodon_4.2.2/f5c_meth_frec.tsv",  header=T, sep="\t")
+#import data
+C0<-read.table(file="~/C0/f5c_meth_frec.tsv",  header=T, sep="\t")
 
-C2<-read.table(file="~/C2_methylation_frec_sinlineachunga.tsv", header=T, sep="\t")
+C1<-read.table(file="~/C1/f5c_meth_frec.tsv",  header=T, sep="\t")
+
+C2<-read.table(file="~/C2/f5c_meth_frec.tsv", header=T, sep="\t")
   
-C3<-read.table(file="~/C3_f5c_meth_frec.tsv",  header=T, sep="\t")
+C3<-read.table(file="~/C3/f5c_meth_frec.tsv",  header=T, sep="\t")
 
-CORT12<-read.table(file="~/CORT12/megalodon_allfast5_4.2.2/f5c_meth_frec.tsv",  header=T, sep="\t")
+CORT12<-read.table(file="~/CORT12/f5c_meth_frec.tsv",  header=T, sep="\t")
 
 CORT13<-read.table(file="~/CORT13/f5c_meth_frec.tsv", header=T, sep="\t")
 
-CORT14<-read.table(file="~/CORT14/20210311_megalodon_4.2.2/f5c_meth_frec.tsv",  header=T, sep="\t")
+CORT14<-read.table(file="~/CORT14/f5c_meth_frec.tsv",  header=T, sep="\t")
 
-CORT15<-read.table(file="~/CORT15/20210319_megalodon_4.2.2/f5c_meth_frec_chr.tsv",  header=T, sep="\t")
+CORT15<-read.table(file="~/CORT15/f5c_meth_frec_chr.tsv",  header=T, sep="\t")
 
 C0_DSS<-prepare_for_DSS(C0)
 C1_DSS<-prepare_for_DSS(C1)
@@ -126,24 +144,6 @@ methylation_dataframe %>%
   geom_density()
 
 #boxplot of Mup20 chr4:62,009,410-62,056,143
-
-boxplotting2<-function(BSobj, gr){
-  BSobj_gr<-subsetByOverlaps(BSobj, gr)
-  methylation_data<-getMeth(BSobj_gr, type="raw")
-  methylation_dataframe<-na.omit(as.data.frame(methylation_data))
-  methylation_dataframe$Control_mean<-rowMeans(methylation_dataframe[,1:4])  
-  methylation_dataframe$CORT_mean<-rowMeans(methylation_dataframe[,5:8])
-  methylation_dataframe$Control_sdev<-apply(methylation_dataframe[,1:4],1,sd)  
-  methylation_dataframe$CORT_sdev<-apply(methylation_dataframe[,5:8],1,sd) 
-  mean(methylation_dataframe$Control_mean)
-  mean(methylation_dataframe$CORT_mean)
-  methylation_dataframe %>% 
-    gather(key="Samples", value="Methylation_frequency") %>%
-    ggplot( aes(x=Samples, y=Methylation_frequency, fill=Samples)) +
-    geom_boxplot() 
-}
-
-
 
 gr<-GRanges(seqnames = "chr4",
             ranges = IRanges(start = 62009410, end=62056143))
