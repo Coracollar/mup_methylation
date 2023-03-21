@@ -103,8 +103,8 @@ methylation_dataframe %>%
   ggplot( aes(x=Methylation_frequency, colour=Samples)) +
   geom_density()
 
-#boxplot of Mup20 chr4:62,009,410-62,056,143
 
+#boxplot of Mup20 chr4:62,009,410-62,056,143
 gr<-GRanges(seqnames = "chr4",
             ranges = IRanges(start = 62009410, end=62056143))
 boxplotting2(BSobj_mup, gr)
