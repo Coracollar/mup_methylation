@@ -88,7 +88,7 @@ write.table(methylation_data,"~/mup_methylation_matrix.tsv") # table of methylat
 
 
 
-#plot data
+##plot data
 methylation_dataframe<-na.omit(as.data.frame(methylation_data))
 
 methylation_dataframe$chr<-as.character(BSobj_mup@rowRanges@seqnames)
@@ -97,7 +97,7 @@ methylation_dataframe$end<-methylation_dataframe$start+1
 methylation_dataframe$Control_mean<-rowMeans(methylation_dataframe[,1:4])  
 methylation_dataframe$CORT_mean<-rowMeans(methylation_dataframe[,5:8])
 
-#density plot of Mup20 region methylation
+#density plot of whole mup region methylation
 methylation_dataframe %>% 
   gather(key="Samples", value="Methylation_frequency") %>%
   ggplot( aes(x=Methylation_frequency, colour=Samples)) +
@@ -144,7 +144,7 @@ t.test.from.summary.data(m_x, s_x, 4, m_y, s_y, 4)
 ```
 
 
-Finally, plots of methylation vs genomic position were done using Nanomethviz https://github.com/shians/NanoMethViz, which extracts methylation data from calls derived directly from f5c calls.
+Finally, plots of methylation vs genomic position were done using Nanomethviz https://github.com/shians/NanoMethViz, which extracts methylation data from calls derived directly from f5c.
 
 ```R
 library(NanoMethViz)
