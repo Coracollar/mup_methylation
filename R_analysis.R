@@ -117,11 +117,18 @@ rm(C0_DSS, C1_DSS, C2_DSS, C3_DSS, CORT12_DSS, CORT13_DSS, CORT14_DSS, CORT15_DS
 gr<-GRanges(seqnames = "chr4",
             ranges = IRanges(start = 59904830, end=62212385))
 
-#Mup20
-#chr4:62050234-62050486
-gr<-GRanges(seqnames = "chr4",
-            ranges = IRanges(start = 62049529, end=62050347))
 
+#test significance
+dmlTest= DMLtest(BSobjtldr, group1=c("CORT12", "CORT13", "CORT14", "CORT15"), group2=c("C0","C1", "C2", "C3"), smoothing=FALSE)
+#find differentially methylated regions
+dmrs = callDMR(dmlTest, p.threshold=0.05)
+
+write.table(dmlTest, file= "dmltest_mup.tsv", append = FALSE, sep = "\t", dec = ".", quote = FALSE, row.names = FALSE, col.names = TRUE)
+
+#get methylation frequency matrix
+methylation_data<-getMeth(BSobj_mup, type="raw")
+rownames(methylation_data)<-paste(BSobj_mup@rowRanges@seqnames, BSobj_mup@rowRanges@ranges@start)
+write.table(methylation_data,"~/mup_methylation_matrix.tsv") # table of methylation provided
 
 BSobj_mup<-subsetByOverlaps(BSobjmc, gr)
 
@@ -137,14 +144,13 @@ methylation_dataframe$end<-methylation_dataframe$start+1
 methylation_dataframe$Control_mean<-rowMeans(methylation_dataframe[,1:4])  
 methylation_dataframe$CORT_mean<-rowMeans(methylation_dataframe[,5:8])
 
-#density plot of Mup20 region methylation
+#density plot of Mup region methylation
 methylation_dataframe %>% 
   gather(key="Samples", value="Methylation_frequency") %>%
   ggplot( aes(x=Methylation_frequency, colour=Samples)) +
   geom_density()
 
 #boxplot of Mup20 chr4:62,009,410-62,056,143
-
 gr<-GRanges(seqnames = "chr4",
             ranges = IRanges(start = 62009410, end=62056143))
 boxplotting2(BSobj_mup, gr)
