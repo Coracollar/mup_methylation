@@ -24,7 +24,7 @@ f5c meth-freq -i f5c_meth_calls.tsv > f5c_meth_frec.tsv
 
 ```
 
-Methylation frequencies obtained from f5c were loaded into R in order to extract the region of interest for differential analysis. We used DSS dmltest and findDMR options to look for differentially methylated regions (no DMR was found in our data). We used ggplot to plot methylation distributions (boxplot, density plot). Differential methylation at promoters was calculated with a regular ttest. Although no DMR was found for p.threshold 0.05. Functions prepare_for_DSS and boxplotting2 are in the script R_analysis.R.
+Methylation frequencies obtained from f5c were loaded into R in order to extract the region of interest for differential analysis. We used DSS https://github.com/haowulab/DSS dmltest and findDMR functions to look for differentially methylated regions (no DMR was found in our data for p.threshold 0.05). We used ggplot to plot methylation distributions (boxplot, density plot). Differential methylation at promoters was calculated with a regular ttest.  Functions prepare_for_DSS and boxplotting2 are in the script R_analysis.R.
 
 ```R
 library(bsseq)
