@@ -188,6 +188,9 @@ create_tabix_file(methy_calls, methy_tabix, samples)
 methy <-"4vs4_methy_data.bgz"
 
 exon_tibble <- get_exons_mus_musculus()
+exon_tibble<-exon_tibble[!duplicated(exon_tibble$symbol),]
+exon_tibble$chr
+exon_tibble$chr<-str_remove(exon_tibble$chr, 'chr')
 
 sample <- c("C0", "C1", "C2", "C3","CORT12", "CORT13", "CORT14", "CORT15")
 group<-c("Control","Control","Control","Control", "CORT", "CORT", "CORT", "CORT")
@@ -209,5 +212,7 @@ plot_gene(nmeth_results, "Zhx2")
 
 plot_region(nmeth_results, "4", 59904830, 62212385)
 
+#check H19/Igf2 Imprinted region
+plot_region(nmeth_results, "7", 142574081,142671474)
 
 ```
