@@ -214,5 +214,14 @@ plot_region(nmeth_results, "4", 59904830, 62212385)
 
 #check H19/Igf2 Imprinted region
 plot_region(nmeth_results, "7", 142574081,142671474)
-
+gr<-GRanges(seqnames = "chr7",
+            ranges = IRanges(start = 142574081, end=142671474))
+         
+BSobj_imprint<-subsetByOverlaps(BSobjmc, gr)
+methylation_data<-getMeth(BSobj_imprint, type="raw")
+rownames(methylation_data)<-paste(BSobj_imprint@rowRanges@seqnames, BSobj_imprint@rowRanges@ranges@start)
+write.csv(methylation_data,"Igf2_H19_meth_frec.csv" )
+dmlTest= DMLtest(BSobj_imprint, group1=c("CORT12", "CORT13", "CORT14", "CORT15"), group2=c("C0","C1", "C2", "C3"), smoothing=FALSE)
+write.csv(dmlTest, "dmltest_Igf2H19.csv"
+dmrs = callDMR(dmlTest, p.threshold=0.05) #none found
 ```
